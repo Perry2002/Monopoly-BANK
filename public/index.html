@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monopoly Banking</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .hidden { display: none; }
+    .copy-button { cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; padding: 2px 4px; }
+    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); }
+    .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; position: relative; }
+    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+    .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
+    .participant { background-color: green; padding: 10px; margin: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .add-money { background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+    .infinity-sign { position: absolute; top: 10px; right: 10px; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div id="initialChoice">
+    <h1>Monopoly Banking</h1>
+    <button id="chooseCreateRoom">Create Room</button>
+    <button id="chooseJoinRoom">Join Room</button>
+  </div>
+
+  <div id="createRoomSection" class="hidden">
+    <h2>Create Room</h2>
+    <input type="text" id="createUserName" placeholder="Enter Your Name">
+    <button id="createRoom">Create Room</button>
+  </div>
+
+  <div id="joinRoomSection" class="hidden">
+    <h2>Join Room</h2>
+    <input type="text" id="userName" placeholder="Enter Your Name">
+    <input type="text" id="joinRoomId" placeholder="Enter Room ID">
+    <button id="joinRoom">Join Room</button>
+  </div>
+
+  <div id="creatorBankingInterface" class="hidden">
+    <h2>Banking Interface (Creator)</h2>
+    <p>User: <span id="creatorUserNameDisplay"></span></p>
+    <p>Room ID: <span id="roomIdDisplay"></span> <button class="copy-button" onclick="copyToClipboard(document.getElementById('roomIdDisplay').innerText)">Copy</button></p>
+    <p>Balance: <span id="creatorBalance">$0</span></p>
+    <input type="number" id="creatorTransactionAmount" placeholder="Enter amount">
+    <input type="text" id="creatorRecipientName" placeholder="Recipient Name">
+    <button id="creatorSendMoney">Send Money</button>
+    <button id="creatorShowHistory">Show Transaction History</button>
+    <button id="openBankModal">BANK</button>
+
+    <div class="transaction-history">
+      <h3>Transaction History</h3>
+      <ul id="creatorTransactionHistory"></ul>
+    </div>
+
+    <div class="notifications">
+      <h3>Notifications</h3>
+      <ul id="creatorNotifications"></ul>
+    </div>
+  </div>
+
+  <div id="participantBankingInterface" class="hidden">
+    <h2>Banking Interface</h2>
+    <p>User: <span id="participantUserNameDisplay"></span></p>
+    <p>Balance: <span id="participantBalance">$0</span></p>
+    <input type="number" id="participantTransactionAmount" placeholder="Enter amount">
+    <input type="text" id="participantRecipientName" placeholder="Recipient Name">
+    <button id="participantSendMoney">Send Money</button>
+    <button id="participantShowHistory">Show Transaction History</button>
+
+    <div class="transaction-history">
+      <h3>Transaction History</h3>
+      <ul id="participantTransactionHistory"></ul>
+    </div>
+
+    <div class="notifications">
+      <h3>Notifications</h3>
+      <ul id="participantNotifications"></ul>
+    </div>
+  </div>
+
+  <!-- The Modal -->
+  <div id="bankModal" class="modal">
+    <div class="modal-content">
+      <span class="infinity-sign">Montant=∞</span>
+      <span class="close">&times;</span>
+      <h2>Participants</h2>
+      <select id="participantSelect"></select>
+      <input type="number" id="bankTransactionAmount" placeholder="Enter amount">
+      <button id="bankSendMoney">Send Money</button>
+      <ul id="participantList"></ul>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentRoomId;
+    let currentUserName;
+
+    document.getElementById('chooseCreateRoom').addEventListener('click', () => {
+      document.getElementById('initialChoice').classList.add('hidden');
+      document.getElementById('createRoomSection').classList.remove('hidden');
+    });
+
+    document.getElementById('chooseJoinRoom').addEventListener('click', () => {
+      document.getElementById('initialChoice').classList.add('hidden');
+      document.getElementById('joinRoomSection').classList.remove('hidden');
+    });
+
+    document.getElementById('createRoom').addEventListener('click', () => {
+      const userName = document.getElementById('createUserName').value;
+      if (userName) {
+        currentUserName = userName;
+        socket.emit('createRoom', userName);
+      }
+    });
+
+    document.getElementById('joinRoom').addEventListener('click', () => {
+      const roomId = document.getElementById('joinRoomId').value;
+      const userName = document.getElementById('userName').value;
+      if (roomId && userName) {
+        currentRoomId = roomId;
+        currentUserName = userName;
+        socket.emit('joinRoom', roomId, userName);
+      }
+    });
+
+    document.getElementById('creatorSendMoney').addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('creatorTransactionAmount').value);
+      const recipientName = document.getElementById('creatorRecipientName').value;
+      if (!isNaN(amount) && recipientName) {
+        socket.emit('transaction', currentRoomId, currentUserName, recipientName, amount);
+      }
+    });
+
+    document.getElementById('creatorShowHistory').addEventListener('click', () => {
+      socket.emit('getTransactionHistory', currentRoomId, currentUserName);
+    });
+
+    document.getElementById('participantSendMoney').addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('participantTransactionAmount').value);
+      const recipientName = document.getElementById('participantRecipientName').value;
+      if (!isNaN(amount) && recipientName) {
+        socket.emit('transaction', currentRoomId, currentUserName, recipientName, amount);
+      }
+    });
+
+    document.getElementById('participantShowHistory').addEventListener('click', () => {
+      socket.emit('getTransactionHistory', currentRoomId, currentUserName);
+    });
+
+    document.getElementById('openBankModal').addEventListener('click', () => {
+      socket.emit('getParticipants', currentRoomId);
+      document.getElementById('bankModal').style.display = 'block';
+    });
+
+    document.getElementById('bankSendMoney').addEventListener('click', () => {
+      const selectedParticipant = document.getElementById('participantSelect').value;
+      const amount = parseInt(document.getElementById('bankTransactionAmount').value);
+      if (selectedParticipant && !isNaN(amount)) {
+        socket.emit('addMoney', currentRoomId, selectedParticipant, amount);
+      }
+    });
+
+    const modal = document.getElementById('bankModal');
+    const span = document.getElementsByClassName('close')[0];
+    span.onclick = function() {
+      modal.style.display = 'none';
+    }
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    socket.on('roomCreated', (roomId, userName, balance) => {
+      currentRoomId = roomId;
+      currentUserName = userName;
+      document.getElementById('creatorUserNameDisplay').innerText = userName;
+      document.getElementById('roomIdDisplay').innerText = roomId;
+      document.getElementById('creatorBalance').innerText = `$${balance}`;
+      document.getElementById('createRoomSection').classList.add('hidden');
+      document.getElementById('creatorBankingInterface').classList.remove('hidden');
+    });
+
+    socket.on('roomJoined', (roomId, balance, userName) => {
+      document.getElementById('participantUserNameDisplay').innerText = userName;
+      document.getElementById('participantBalance').innerText = `$${balance}`;
+      document.getElementById('joinRoomSection').classList.add('hidden');
+      document.getElementById('participantBankingInterface').classList.remove('hidden');
+    });
+
+    socket.on('balanceUpdate', (balance) => {
+      if (document.getElementById('creatorBankingInterface').classList.contains('hidden')) {
+        document.getElementById('participantBalance').innerText = `$${balance}`;
+      } else {
+        document.getElementById('creatorBalance').innerText = `$${balance}`;
+      }
+    });
+
+    socket.on('transactionUpdate', (transaction) => {
+      const notifications = document.getElementById('creatorNotifications');
+      const li = document.createElement('li');
+      li.innerText = `${transaction.from} sent $${transaction.amount} to ${transaction.to}`;
+      notifications.appendChild(li);
+    });
+
+    socket.on('transactionHistory', (transactions) => {
+      const transactionHistory = document.getElementById('creatorTransactionHistory');
+      transactionHistory.innerHTML = '';
+      transactions.forEach(transaction => {
+        const li = document.createElement('li');
+        li.innerText = `${transaction.date}: ${transaction.from} sent $${transaction.amount} to ${transaction.to}`;
+        transactionHistory.appendChild(li);
+      });
+    });
+
+    socket.on('userJoined', (userName) => {
+      const notifications = document.getElementById('creatorNotifications');
+      const li = document.createElement('li');
+      li.innerText = `${userName} joined the room.`;
+      notifications.appendChild(li);
+    });
+
+    socket.on('participantsList', (participants) => {
+      const participantList = document.getElementById('participantList');
+      const participantSelect = document.getElementById('participantSelect');
+      participantList.innerHTML = '';
+      participantSelect.innerHTML = '';
+      participants.forEach(participant => {
+        const participantDiv = document.createElement('div');
+        participantDiv.classList.add('participant');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = participant;
+
+        const addButton = document.createElement('button');
+        addButton.classList.add('add-money');
+        addButton.innerText = '200';
+        addButton.onclick = () => {
+          socket.emit('addMoney', currentRoomId, participant, 200);
+        };
+
+        participantDiv.appendChild(nameSpan);
+        participantDiv.appendChild(addButton);
+        participantList.appendChild(participantDiv);
+
+        const option = document.createElement('option');
+        option.value = participant;
+        option.innerText = participant;
+        participantSelect.appendChild(option);
+      });
+    });
+
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('Copied to clipboard');
+    }
+  </script>
+</body>
+</html>
