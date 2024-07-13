@@ -2,110 +2,129 @@
 <html>
 <head>
   <title>Monopoly Banking</title>
+  <!-- Styles pour la page -->
   <style>
     body { font-family: Arial, sans-serif; }
-    .hidden { display: none; }
+    .hidden { display: none; } /* Cache les éléments avec cette classe */
     .copy-button { cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; padding: 2px 4px; }
-    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); }
-    .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; position: relative; }
-    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
-    .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
-    .participant { background-color: green; padding: 10px; margin: 5px; display: flex; justify-content: space-between; align-items: center; }
-    .add-money { background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer; }
-    .infinity-sign { position: absolute; top: 10px; right: 10px; font-size: 18px; font-weight: bold; }
+    .modal { /* Style pour la fenêtre modale */
+      display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); }
+    .modal-content { /* Style pour le contenu de la fenêtre modale */
+      background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; position: relative; }
+    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; } /* Style pour le bouton de fermeture */
+    .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; } /* Effet au survol ou focus pour le bouton de fermeture */
+    .participant { background-color: green; padding: 10px; margin: 5px; display: flex; justify-content: space-between; align-items: center; } /* Style pour la liste des participants */
+    .add-money { background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer; } /* Style pour le bouton d'ajout d'argent */
+    .infinity-sign { position: absolute; top: 10px; right: 10px; font-size: 18px; font-weight: bold; } /* Style pour le signe d'infini */
   </style>
 </head>
 <body>
+  <!-- Section de choix initial -->
   <div id="initialChoice">
     <h1>Monopoly Banking</h1>
-    <button id="chooseCreateRoom">Create Room</button>
-    <button id="chooseJoinRoom">Join Room</button>
+    <button id="chooseCreateRoom">Créer une salle</button>
+    <button id="chooseJoinRoom">Rejoindre une salle</button>
   </div>
 
+  <!-- Section de création de salle -->
   <div id="createRoomSection" class="hidden">
-    <h2>Create Room</h2>
-    <input type="text" id="createUserName" placeholder="Enter Your Name">
-    <button id="createRoom">Create Room</button>
+    <h2>Créer une salle</h2>
+    <input type="text" id="createUserName" placeholder="Entrez votre nom">
+    <button id="createRoom">Créer la salle</button>
   </div>
 
+  <!-- Section de rejoindre une salle -->
   <div id="joinRoomSection" class="hidden">
-    <h2>Join Room</h2>
-    <input type="text" id="userName" placeholder="Enter Your Name">
-    <input type="text" id="joinRoomId" placeholder="Enter Room ID">
-    <button id="joinRoom">Join Room</button>
+    <h2>Rejoindre une salle</h2>
+    <input type="text" id="userName" placeholder="Entrez votre nom">
+    <input type="text" id="joinRoomId" placeholder="Entrez l'identifiant de la salle">
+    <button id="joinRoom">Rejoindre la salle</button>
   </div>
 
+  <!-- Interface bancaire du créateur -->
   <div id="creatorBankingInterface" class="hidden">
-    <h2>Banking Interface (Creator)</h2>
-    <p>User: <span id="creatorUserNameDisplay"></span></p>
-    <p>Room ID: <span id="roomIdDisplay"></span> <button class="copy-button" onclick="copyToClipboard(document.getElementById('roomIdDisplay').innerText)">Copy</button></p>
-    <p>Balance: <span id="creatorBalance">$0</span></p>
-    <input type="number" id="creatorTransactionAmount" placeholder="Enter amount">
-    <input type="text" id="creatorRecipientName" placeholder="Recipient Name">
-    <button id="creatorSendMoney">Send Money</button>
-    <button id="creatorShowHistory">Show Transaction History</button>
-    <button id="openBankModal">BANK</button>
+    <h2>Interface bancaire (Créateur)</h2>
+    <p>Utilisateur : <span id="creatorUserNameDisplay"></span></p>
+    <p>ID de la salle : <span id="roomIdDisplay"></span> <button class="copy-button" onclick="copyToClipboard(document.getElementById('roomIdDisplay').innerText)">Copier</button></p>
+    <p>Solde : <span id="creatorBalance">$0</span></p>
+    <input type="number" id="creatorTransactionAmount" placeholder="Entrez le montant">
+    <input type="text" id="creatorRecipientName" placeholder="Nom du destinataire">
+    <!-- <select id="participantSelect"></select> -->
+    <button id="creatorSendMoney">Envoyer de l'argent</button>
+    <button id="creatorShowHistory">Historique des transactions</button>
+    <button id="openBankModal">BANQUE</button>
 
+    <!-- Section d'historique des transactions -->
     <div class="transaction-history">
-      <h3>Transaction History</h3>
+      <h3>Historique des transactions</h3>
       <ul id="creatorTransactionHistory"></ul>
     </div>
 
+    <!-- Section des notifications -->
     <div class="notifications">
       <h3>Notifications</h3>
       <ul id="creatorNotifications"></ul>
     </div>
   </div>
 
+  <!-- Interface bancaire du participant -->
   <div id="participantBankingInterface" class="hidden">
-    <h2>Banking Interface</h2>
-    <p>User: <span id="participantUserNameDisplay"></span></p>
-    <p>Balance: <span id="participantBalance">$0</span></p>
-    <input type="number" id="participantTransactionAmount" placeholder="Enter amount">
-    <input type="text" id="participantRecipientName" placeholder="Recipient Name">
-    <button id="participantSendMoney">Send Money</button>
-    <button id="participantShowHistory">Show Transaction History</button>
-
+    <h2>Interface bancaire</h2>
+    <p>Utilisateur : <span id="participantUserNameDisplay"></span></p>
+    <p>Solde : <span id="participantBalance">$0</span></p>
+    <input type="number" id="participantTransactionAmount" placeholder="Entrez le montant">
+    <input type="text" id="participantRecipientName" placeholder="Nom du destinataire">
+    <!-- <select id="participantSelect"></select> -->
+    <button id="participantSendMoney">Envoyer de l'argent</button>
+    <button id="participantShowHistory">Historique des transactions</button>
+     <!-- en haut ici -->
+    <!-- Section d'historique des transactions -->
     <div class="transaction-history">
-      <h3>Transaction History</h3>
+      <h3>Historique des transactions</h3>
       <ul id="participantTransactionHistory"></ul>
     </div>
 
+    <!-- Section des notifications -->
     <div class="notifications">
       <h3>Notifications</h3>
       <ul id="participantNotifications"></ul>
     </div>
   </div>
 
-  <!-- The Modal -->
+  <!-- La fenêtre modale -->
   <div id="bankModal" class="modal">
     <div class="modal-content">
-      <span class="infinity-sign">Montant=∞</span>
+      <span class="infinity-sign">Montant = ∞</span>
       <span class="close">&times;</span>
       <h2>Participants</h2>
       <select id="participantSelect"></select>
-      <input type="number" id="bankTransactionAmount" placeholder="Enter amount">
-      <button id="bankSendMoney">Send Money</button>
+      <input type="number" id="bankTransactionAmount" placeholder="Entrez le montant">
+      <button id="bankSendMoney">Envoyer de l'argent</button>
+      <button id="bankTackMoney">Prendre de l'argent</button>
       <ul id="participantList"></ul>
     </div>
   </div>
 
+  <!-- Script pour Socket.io -->
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
     let currentRoomId;
     let currentUserName;
 
+    // Gestionnaire d'événement pour créer une salle
     document.getElementById('chooseCreateRoom').addEventListener('click', () => {
       document.getElementById('initialChoice').classList.add('hidden');
       document.getElementById('createRoomSection').classList.remove('hidden');
     });
 
+    // Gestionnaire d'événement pour rejoindre une salle
     document.getElementById('chooseJoinRoom').addEventListener('click', () => {
       document.getElementById('initialChoice').classList.add('hidden');
       document.getElementById('joinRoomSection').classList.remove('hidden');
     });
 
+    // Gestionnaire d'événement pour créer une salle
     document.getElementById('createRoom').addEventListener('click', () => {
       const userName = document.getElementById('createUserName').value;
       if (userName) {
@@ -114,6 +133,7 @@
       }
     });
 
+    // Gestionnaire d'événement pour rejoindre une salle
     document.getElementById('joinRoom').addEventListener('click', () => {
       const roomId = document.getElementById('joinRoomId').value;
       const userName = document.getElementById('userName').value;
@@ -124,6 +144,7 @@
       }
     });
 
+    // Gestionnaire d'événement pour envoyer de l'argent (créateur)
     document.getElementById('creatorSendMoney').addEventListener('click', () => {
       const amount = parseInt(document.getElementById('creatorTransactionAmount').value);
       const recipientName = document.getElementById('creatorRecipientName').value;
@@ -132,10 +153,12 @@
       }
     });
 
+    // Gestionnaire d'événement pour afficher l'historique des transactions (créateur)
     document.getElementById('creatorShowHistory').addEventListener('click', () => {
       socket.emit('getTransactionHistory', currentRoomId, currentUserName);
     });
 
+    // Gestionnaire d'événement pour envoyer de l'argent (participant)
     document.getElementById('participantSendMoney').addEventListener('click', () => {
       const amount = parseInt(document.getElementById('participantTransactionAmount').value);
       const recipientName = document.getElementById('participantRecipientName').value;
@@ -144,15 +167,18 @@
       }
     });
 
+    // Gestionnaire d'événement pour afficher l'historique des transactions (participant)
     document.getElementById('participantShowHistory').addEventListener('click', () => {
       socket.emit('getTransactionHistory', currentRoomId, currentUserName);
     });
 
+    // Gestionnaire d'événement pour ouvrir la fenêtre modale de la banque
     document.getElementById('openBankModal').addEventListener('click', () => {
       socket.emit('getParticipants', currentRoomId);
       document.getElementById('bankModal').style.display = 'block';
     });
 
+    // Gestionnaire d'événement pour envoyer de l'argent depuis la banque
     document.getElementById('bankSendMoney').addEventListener('click', () => {
       const selectedParticipant = document.getElementById('participantSelect').value;
       const amount = parseInt(document.getElementById('bankTransactionAmount').value);
@@ -160,7 +186,39 @@
         socket.emit('addMoney', currentRoomId, selectedParticipant, amount);
       }
     });
+    // ici bankTackMoney
+    // Gestionnaire d'événement pour prendre de l'argent depuis la banque
+    document.getElementById('bankTackMoney').addEventListener('click', () => {
+    const selectedParticipant = document.getElementById('participantSelect').value;
+    const amount = parseInt(document.getElementById('bankTransactionAmount').value);
+    if (selectedParticipant && !isNaN(amount)) {
+        // Modifier l'événement pour soustraire le montant au lieu de l'ajouter
+        socket.emit('subtractMoney', currentRoomId, selectedParticipant, amount);
+    }
+    });
 
+    
+    socket.on('confirmSubtractMoney', (data) => {
+        const { roomId, userName, amount } = data;
+        const confirmation = confirm(`La banque vous prend ${amount}. Vous confirmez?`);
+        
+        // Émettre la réponse de confirmation vers le serveur
+        socket.emit('confirmSubtractMoneyResponse', {
+            roomId: roomId,
+            userName: userName,
+            amount: amount,
+            confirmed: confirmation
+        });
+    });
+
+    socket.on('subtractMoneyCancelled', () => {
+        alert('Money subtraction cancelled.');
+    });
+
+
+
+
+    // Gestionnaire pour fermer la fenêtre modale
     const modal = document.getElementById('bankModal');
     const span = document.getElementsByClassName('close')[0];
     span.onclick = function() {
@@ -172,6 +230,9 @@
       }
     }
 
+    // Écouteurs d'événements Socket.io
+
+    // Lorsque la salle est créée avec succès
     socket.on('roomCreated', (roomId, userName, balance) => {
       currentRoomId = roomId;
       currentUserName = userName;
@@ -182,6 +243,7 @@
       document.getElementById('creatorBankingInterface').classList.remove('hidden');
     });
 
+    // Lorsque le participant rejoint une salle
     socket.on('roomJoined', (roomId, balance, userName) => {
       document.getElementById('participantUserNameDisplay').innerText = userName;
       document.getElementById('participantBalance').innerText = `$${balance}`;
@@ -189,6 +251,7 @@
       document.getElementById('participantBankingInterface').classList.remove('hidden');
     });
 
+    // Mise à jour du solde suite à une transaction
     socket.on('balanceUpdate', (balance) => {
       if (document.getElementById('creatorBankingInterface').classList.contains('hidden')) {
         document.getElementById('participantBalance').innerText = `$${balance}`;
@@ -197,30 +260,34 @@
       }
     });
 
+    // Mise à jour des notifications suite à une transaction
     socket.on('transactionUpdate', (transaction) => {
       const notifications = document.getElementById('creatorNotifications');
       const li = document.createElement('li');
-      li.innerText = `${transaction.from} sent $${transaction.amount} to ${transaction.to}`;
+      li.innerText = `${transaction.from} a envoyé $${transaction.amount} à ${transaction.to}`;
       notifications.appendChild(li);
     });
 
+    // Affichage de l'historique des transactions
     socket.on('transactionHistory', (transactions) => {
       const transactionHistory = document.getElementById('creatorTransactionHistory');
       transactionHistory.innerHTML = '';
       transactions.forEach(transaction => {
         const li = document.createElement('li');
-        li.innerText = `${transaction.date}: ${transaction.from} sent $${transaction.amount} to ${transaction.to}`;
+        li.innerText = `${transaction.date}: ${transaction.from} a envoyé $${transaction.amount} à ${transaction.to}`;
         transactionHistory.appendChild(li);
       });
     });
 
+    // Lorsqu'un nouvel utilisateur rejoint la salle
     socket.on('userJoined', (userName) => {
       const notifications = document.getElementById('creatorNotifications');
       const li = document.createElement('li');
-      li.innerText = `${userName} joined the room.`;
+      li.innerText = `${userName} a rejoint la salle.`;
       notifications.appendChild(li);
     });
 
+    // Liste des participants
     socket.on('participantsList', (participants) => {
       const participantList = document.getElementById('participantList');
       const participantSelect = document.getElementById('participantSelect');
@@ -235,7 +302,7 @@
 
         const addButton = document.createElement('button');
         addButton.classList.add('add-money');
-        addButton.innerText = '200';
+        addButton.innerText = 'Ajouter 200';
         addButton.onclick = () => {
           socket.emit('addMoney', currentRoomId, participant, 200);
         };
@@ -251,6 +318,7 @@
       });
     });
 
+    // Fonction pour copier du texte dans le presse-papiers
     function copyToClipboard(text) {
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -258,7 +326,7 @@
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      alert('Copied to clipboard');
+      alert('Copié dans le presse-papiers');
     }
   </script>
 </body>
